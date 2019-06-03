@@ -11,7 +11,6 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     
-    let defaults = UserDefaults.standard
     
     var itemArray = [ItemBank]()
     
@@ -21,19 +20,18 @@ class TodoListViewController: UITableViewController {
         var textField = UITextField()
         
         let alert = UIAlertController(title: "Add New ToDoey Item", message: "", preferredStyle: .alert)
-        
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             //what will happen once the user clickes the Add Item button on our UIAlert
-            
             
             let newItem = ItemBank()
             newItem.title = textField.text!
             
             self.itemArray.append(newItem)
             
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
+            self.saveItems()
             
             self.tableView.reloadData()
+            
         }
         
         alert.addTextField { (alertTextField) in
@@ -51,31 +49,24 @@ class TodoListViewController: UITableViewController {
 //
 //    var itemArray = ["Go Grocery Shopping", "Go to Softbank", "Make Money"]
     
+    
+    
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+     
         
-        let newItem = ItemBank()
-        newItem.title = "Go Softbank"
-        itemArray.append(newItem)
-        
-        
-        let newItem2 = ItemBank()
-        newItem2.title = "Study"
-        itemArray.append(newItem2)
+        print(dataFilePath)
         
         
-        let newItem3 = ItemBank()
-        newItem3.title = "Go Grocery Shopping"
-        itemArray.append(newItem3)
+        loadItems()
         
-        if let items = defaults.array(forKey: "ToDoListArray") as? [ItemBank] {
-            itemArray = items
-            
-//        }
-    }
+        }
+
     
-        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoitemCell", for: indexPath)
        
@@ -89,25 +80,53 @@ class TodoListViewController: UITableViewController {
         return cell
     }
     
-        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return itemArray.count
     }
 
     
-        func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
 //        print(itemArray[indexPath.row])
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        tableView.reloadData()
+        saveItems()
+        
         tableView.deselectRow(at: indexPath, animated: true)
         
     }
 
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+            
+            
+        }catch{
+            print("Error encoding item array, \(error)")
+        }
+        
+        self.tableView.reloadData()
+    }
+    
+    func loadItems() {
+        if let data = try? Data(contentsOf: dataFilePath!){
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([ItemBank].self, from: data)
+       
+            }catch{
+                print(error)
+            }
+            
+        }
+    }
 
     
 }
 
-}
+

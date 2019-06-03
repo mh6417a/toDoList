@@ -8,7 +8,7 @@
 
 import Foundation
 
-class ItemBank {
+class ItemBank: Codable {
     
     var title : String = ""
     var done : Bool = false
